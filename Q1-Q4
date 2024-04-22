@@ -1,0 +1,92 @@
+--Q1
+local STORAGE_KEY = 1000
+
+-- Frees up the player's storage
+local function releasePlayerStorage(player)
+    player:setStorageValue(STORAGE_KEY, -1)
+    player:sendTextMessage(MESSAGE_INFO_DESCR, "Your storage has been freed.")
+end
+
+-- The event handler that calls release when the player logs out
+function onLogout(player)
+    if player:getStorageValue(STORAGE_KEY) == 1 then
+        addEvent(releasePlayerStorage, 1000, player) -- The player object must also be passed to the event handler
+    end
+    return true
+end
+
+
+
+--Q2
+function printSmallGuildNames(memberCount)
+    -- This method prints the names of clans with fewer members than specified with the memberCount parameter
+    local selectGuildQuery = db.prepare("SELECT name FROM guilds WHERE max_members < ?;")
+    local resultId = db.query(selectGuildQuery, memberCount)
+
+    if resultId then
+        repeat
+            local row = result.fetchAssoc(resultId)
+            if row then
+                local guildName = row.name
+                print(guildName)
+            end
+        until not row
+
+        result.free(resultId)
+    else
+        print("An error occurred while querying the database.")
+    end
+end
+
+
+
+--Q3
+function removeMemberFromPlayerParty(playerId, memberName)
+    local player = Player(playerId)
+    local party = player:getParty()
+
+    if party then
+        local members = party:getMembers()
+        for _, member in ipairs(members) do
+            if member:getName() == memberName then
+                party:removeMember(member)
+                print(memberName.." successfully removed from the player's party.")
+                return true
+            end
+        end
+        print("The specified player is not in the player's party.")
+        return false
+    else
+        print("The player has no party.")
+        return false
+    end
+end
+
+
+
+--Q4
+void Game::addItemToPlayer(const std::string& recipient, uint16_t itemId)
+{
+    Player* player = g_game.getPlayerByName(recipient);
+    if (!player) {
+        player = new Player(nullptr);
+        if (!IOLoginData::loadPlayerByName(player, recipient)) {
+            delete player; // Let's release the unused player object
+            return;
+        }
+    }
+
+    Item* item = Item::CreateItem(itemId);
+    if (!item) {
+        delete player; // If no element is created, we free the player object and exit
+        return;
+    }
+
+    g_game.internalAddItem(player->getInbox(), item, INDEX_WHEREEVER, FLAG_NOLIMIT);
+
+    if (player->isOffline()) {
+        IOLoginData::savePlayer(player);
+    } else {
+        delete player; // If the player is online, we release the object as it is no longer needed
+    }
+}
