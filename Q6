@@ -1,0 +1,67 @@
+int main() {
+    // create window
+    sf::RenderWindow window(sf::VideoMode(800, 600), "2D RPG Game");
+
+    // Player sprite
+    sf::Texture playerTexture;
+    playerTexture.loadFromFile("player.png"); 
+
+    sf::Sprite player(playerTexture);
+    player.setPosition(400, 300); // start pos
+
+    // clone vector
+    std::vector<sf::Sprite> clones;
+
+    // slide
+    float slideDistance = 100.0f; 
+    float slideSpeed = 0.5f; 
+
+    // Game loop
+    while (window.isOpen()) {
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed) {
+                window.close();
+            }
+        }
+
+        // Keyboard control
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) {
+            // Controls direction based on a/w/s/d keys
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+                // left
+                sf::Sprite clone(player);
+                clones.push_back(clone);
+                player.move(-slideDistance * slideSpeed, 0);
+            } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+                // right
+                sf::Sprite clone(player);
+                clones.push_back(clone);
+                player.move(slideDistance * slideSpeed, 0);
+            } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+                // up
+                sf::Sprite clone(player);
+                clones.push_back(clone);
+                player.move(0, -slideDistance * slideSpeed);
+            } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+                // down
+                sf::Sprite clone(player);
+                clones.push_back(clone);
+                player.move(0, slideDistance * slideSpeed);
+            }
+        }
+
+        // draw
+        window.clear();
+        for (const auto& clone : clones) {
+            window.draw(clone);
+        }
+        window.draw(player);
+        window.display();
+
+        // clear clones
+        clones.clear();
+    }
+
+    return 0;
+}
