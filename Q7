@@ -1,0 +1,122 @@
+#include <SDL2/SDL.h>
+#include <iostream>
+
+const int WINDOW_WIDTH = 800;
+const int WINDOW_HEIGHT = 600;
+const int BUTTON_WIDTH = 100;
+const int BUTTON_HEIGHT = 50;
+const int BUTTON_SPEED = 5;
+
+class Button {
+public:
+    Button(int x, int y, int width, int height) 
+        : x(x), y(y), width(width), height(height), direction(-BUTTON_SPEED) {}
+
+    void update() {
+        // Update the x position of the button
+        x += direction;
+
+        // Check if button reached the left side of the window
+        if (x < 0) {
+            // Change direction
+            direction = BUTTON_SPEED;
+        }
+        // Check if button reached the right side of the window
+        else if (x + width > WINDOW_WIDTH) {
+            // Change direction
+            direction = -BUTTON_SPEED;
+        }
+    }
+
+    void draw(SDL_Renderer* renderer) {
+        SDL_Rect buttonRect = {x, y, width, height};
+        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255); // Green button
+        SDL_RenderFillRect(renderer, &buttonRect);
+        
+        // Draw the "Start" text on the button
+        // This part needs to be done with a text rendering library like SDL_ttf (not included in the example)
+    }
+
+    // Check if the mouse click is within the button
+    bool isClicked(int mouseX, int mouseY) {
+        return mouseX > x && mouseX < x + width && mouseY > y && mouseY < y + height;
+    }
+
+    void reset() {
+        // Reset the button to the right side of the window
+        x = WINDOW_WIDTH - width;
+        direction = -BUTTON_SPEED;
+    }
+
+private:
+    int x, y, width, height;
+    int direction;
+};
+
+int main() {
+    // Initialize SDL
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
+        return 1;
+    }
+
+    // Create a window
+    SDL_Window* window = SDL_CreateWindow("Game Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
+    if (!window) {
+        std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
+        return 1;
+    }
+
+    // Create a renderer
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (!renderer) {
+        std::cerr << "Failed to create renderer: " << SDL_GetError() << std::endl;
+        return 1;
+    }
+
+    // Create a button at the right side of the window
+    Button startButton(WINDOW_WIDTH - BUTTON_WIDTH, WINDOW_HEIGHT / 2 - BUTTON_HEIGHT / 2, BUTTON_WIDTH, BUTTON_HEIGHT);
+
+    // Main game loop
+    bool running = true;
+    while (running) {
+        // Handle events
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                running = false;
+            } else if (event.type == SDL_MOUSEBUTTONDOWN) {
+                // Check if the button is clicked
+                int mouseX, mouseY;
+                SDL_GetMouseState(&mouseX, &mouseY);
+                if (startButton.isClicked(mouseX, mouseY)) {
+                    // Reset the button to the right side of the window
+                    startButton.reset();
+                }
+            }
+        }
+
+        // Update button position
+        startButton.update();
+
+        // Clear the screen
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
+
+        // Draw the button
+        startButton.draw(renderer);
+
+        // Present the rendered frame
+        SDL_RenderPresent(renderer);
+
+        // Delay to control frame rate
+        SDL_Delay(16);  // Approx. 60 FPS
+    }
+
+    // Clean up
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+
+    return 0;
+}
